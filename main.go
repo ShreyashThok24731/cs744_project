@@ -1,15 +1,24 @@
 package main
 
+import "flag"
+
 import (
 	"database/sql"
 	"log"
 	"net/http"
 	"os"
+	"time"
 
 	_ "github.com/lib/pq" 
 )
 
+var quietMode bool
+
 func main() {
+
+        flag.BoolVar(&quietMode, "quiet", false, "Disable request logging for load testing")
+	flag.Parse()
+
 	connStr := os.Getenv("DB_CONN_STRING")
 	if connStr == "" {
 		log.Println("DB_CONN_STRING environment variable not set. Using default.")
@@ -19,6 +28,9 @@ func main() {
 	if err != nil {
 		log.Fatal("Failed to open database connection:", err)
 	}
+	db.SetMaxOpenConns(50)
+	db.SetMaxIdleConns(50)
+	db.SetConnMaxLifetime(5 * time.Minute)
 	defer db.Close()
 
 	if err := db.Ping(); err != nil {
@@ -30,7 +42,7 @@ func main() {
 		log.Fatal("Failed to initialize database schema:", err)
 	}
 	log.Println("Database schema initialized.")
-	cache := NewKVCache(100)
+	cache := NewKVCache(1000)
 	log.Println("In-memory LRU cache initialized.")
 	server := NewServer(storage, cache)
 	log.Println("HTTP server initialized.")

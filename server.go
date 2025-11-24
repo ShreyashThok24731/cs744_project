@@ -60,8 +60,12 @@ func (s *Server) handleCreate(w http.ResponseWriter, r *http.Request) {
 	}
 	s.cache.Put(req.Key, req.Value)
 	w.WriteHeader(http.StatusCreated)
-	fmt.Fprintf(w, "Successfully created key: %s\n", req.Key)
-	log.Printf("HANDLED CREATE: Key=%s\n", req.Key)
+	//fmt.Fprintf(w, "Successfully created key: %s\n", req.Key)
+	//log.Printf("HANDLED CREATE: Key=%s\n", req.Key)
+	if !quietMode {
+		fmt.Fprintf(w,"Successfully created key: %s\n", req.Key)
+		log.Printf("Handled CREATE: Key=%s\n", req.Key)
+	}
 }
 
 func (s *Server) handleRead(w http.ResponseWriter, r *http.Request, key string) {
@@ -69,7 +73,9 @@ func (s *Server) handleRead(w http.ResponseWriter, r *http.Request, key string) 
 	if found {
 		w.WriteHeader(http.StatusOK)
 		fmt.Fprint(w, value)
-		log.Printf("HANDLED READ (Cache Hit): Key=%s\n", key)
+		if !quietMode {
+		    log.Printf("HANDLED READ (Cache Hit): Key=%s\n", key)
+	        }
 		return
 	}
 	value, err := s.store.Get(key)
@@ -81,7 +87,9 @@ func (s *Server) handleRead(w http.ResponseWriter, r *http.Request, key string) 
 	s.cache.Put(key, value)
 	w.WriteHeader(http.StatusOK)
 	fmt.Fprint(w, value)
-	log.Printf("HANDLED READ (Cache Miss): Key=%s\n", key)
+	if !quietMode {
+	     log.Printf("HANDLED READ (Cache Miss): Key=%s\n", key)
+        } 
 }
 
 func (s *Server) handleDelete(w http.ResponseWriter, r *http.Request, key string) {
@@ -92,5 +100,7 @@ func (s *Server) handleDelete(w http.ResponseWriter, r *http.Request, key string
 	}
 	s.cache.Delete(key)
 	w.WriteHeader(http.StatusNoContent)
-	log.Printf("HANDLED DELETE: Key=%s\n", key)
+	if !quietMode {
+	      log.Printf("HANDLED DELETE: Key=%s\n", key)
+        }
 }
